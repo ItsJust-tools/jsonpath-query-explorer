@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { generateJsonLd, generateToolMetadata } from '@/lib/seo';
 import toolConfig from '@/tool/tool.config';
 import { getPublicSiteUrl, templateMetadata } from '@/tool/template-metadata';
-import { baseConverterTool } from '@/tool/tool-definition';
+import { jsonPathTool } from '@/tool/tool-definition';
 import { ToolCanvas } from '@/tool/components/tool-canvas';
 import { ToolSidebar } from '@/tool/components/tool-sidebar';
 import { ToolToolbar } from '@/tool/components/tool-toolbar';
@@ -93,27 +93,17 @@ describe('app and seo', () => {
   it('covers tool definition and helper exports', async () => {
     expect(cn('a', undefined, 'b', false, null, 'c')).toBe('a b c');
     expect(getPublicSiteUrl()).toBe('http://localhost:3000');
-    expect(baseConverterTool.deserialize({ input: 'ff', inputBase: 16 })).toEqual({
+    expect(jsonPathTool.deserialize({ jsonInput: '{"a":1}', query: '$.a' })).toEqual({
       success: true,
-      data: {
-        input: 'ff',
-        inputBase: 16,
-        digitCase: 'lower',
-        grouping: 'none',
-        showTwosComplement: true,
-        bitLength: DEFAULT_STATE.bitLength,
-      },
+      data: { jsonInput: '{"a":1}', query: '$.a' },
     });
-    expect(baseConverterTool.deserialize({ nope: true })).toEqual({
+    expect(jsonPathTool.deserialize({ nope: true })).toEqual({
       success: false,
-      error: 'Invalid data format: expected { input: string, inputBase: number (2-36), ... }',
+      error: 'Invalid data format: expected { jsonInput: string, query: string }',
     });
-    expect(baseConverterTool.serialize({ ...DEFAULT_STATE, input: '11' })).toContain('"input":"11"');
-    expect(baseConverterTool.deserialize({ input: '11', inputBase: 10, digitCase: 'upper', grouping: 'byte', bitLength: 8 })).toEqual({
-      success: true,
-      data: { input: '11', inputBase: 10, digitCase: 'upper', grouping: 'byte', showTwosComplement: true, bitLength: 8 },
-    });
-    const exporters = (baseConverterTool as { exporters?: Array<{ loader: ExporterLoader }> }).exporters ?? [];
+    expect(jsonPathTool.serialize({ ...DEFAULT_STATE, query: '$.a' })).toContain('"query":"$.a"');
+    const exporters =
+      (jsonPathTool as { exporters?: Array<{ loader: ExporterLoader }> }).exporters ?? [];
     expect(exporters).toHaveLength(4);
     const first = exporters[0];
     expect(first).toBeDefined();
@@ -127,14 +117,15 @@ describe('app and seo', () => {
     render(
       <>
         <ToolToolbar />
-        <ToolSidebar text="ff" fontSize={16} onFontSizeChange={() => {}} />
-        <ToolCanvas state={{ ...DEFAULT_STATE, input: '255' }} fontSize={16} />
+        <ToolSidebar state={DEFAULT_STATE} fontSize={16} onFontSizeChange={() => {}} />
+        <ToolCanvas state={DEFAULT_STATE} />
       </>
     );
 
     expect(screen.getByRole('link', { name: 'Open help page' })).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument(); // digit count for "ff"
-    expect(screen.getByRole('application', { name: 'Base converter canvas' })).toBeInTheDocument();
-    expect(screen.getByTestId('base-row-16')).toHaveTextContent('ff');
+    expect(
+      screen.getByRole('application', { name: 'JSONPath query explorer canvas' })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('result-count')).toHaveTextContent('3 matches');
   });
 });

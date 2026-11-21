@@ -1,26 +1,11 @@
 'use client';
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ComponentType,
-  type ReactNode,
-} from 'react';
+import { useCallback, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
 import { ToolShell, useTool, ImportExport } from '@itsjust/core';
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
-import {
-  toolConfig,
-  templateBaseVersion,
-  ToolCanvas,
-  ToolToolbar,
-  ToolSidebar,
-} from '@/tool';
-import { baseConverterTool as baseConverterToolDef } from '@/tool/tool-definition';
-import type { ToolState } from '@/tool/types';
-import { DEFAULT_STATE } from '@/tool/types';
+import { toolConfig, templateBaseVersion, ToolCanvas, ToolToolbar, ToolSidebar } from '@/tool';
+import { jsonPathTool } from '@/tool/tool-definition';
+import { DEFAULT_STATE, type ToolState } from '@/tool/types';
 
 const DEFAULT_FONT_SIZE = 16;
 const MIN_FONT_SIZE = 8;
@@ -35,7 +20,7 @@ export default function ToolClient() {
     StatusBar?: ComponentType<{ children?: ReactNode }>;
   };
   const canvasRef = useRef<HTMLDivElement>(null);
-  const tool = useTool<ToolState>(baseConverterToolDef, canvasRef);
+  const tool = useTool<ToolState>(jsonPathTool, canvasRef);
   const setToolData = tool.state.setData;
   const showToast = tool.toast;
   const [isSharing, setIsSharing] = useState(false);
@@ -48,8 +33,8 @@ export default function ToolClient() {
   const title = toolConfig.name;
   const state = tool.state.data;
 
-  useEffect(() => {
-    document.title = title;
+  useMemo(() => {
+    if (typeof document !== 'undefined') document.title = title;
   }, [title]);
 
   const handleStateChange = useCallback(
@@ -63,7 +48,7 @@ export default function ToolClient() {
     setFontSize((prev) => Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, prev + delta)));
   }, []);
 
-  useEffect(() => {
+  useMemo(() => {
     if (hasLoadedSharedState.current) return;
     hasLoadedSharedState.current = true;
     const params = new URLSearchParams(window.location.search);
@@ -73,7 +58,7 @@ export default function ToolClient() {
       const serialized = decompressFromEncodedURIComponent(encodedState);
       if (!serialized) throw new Error('Invalid shared URL');
       const parsed: unknown = JSON.parse(serialized);
-      const deserialized = baseConverterToolDef.deserialize(parsed);
+      const deserialized = jsonPathTool.deserialize(parsed);
       if (!deserialized.success) throw new Error(deserialized.error);
       setToolData(deserialized.data);
       showToast('Loaded state from shared URL', 'success');
@@ -86,7 +71,7 @@ export default function ToolClient() {
   const handleShare = useCallback(async () => {
     setIsSharing(true);
     try {
-      const serialized = baseConverterToolDef.serialize(state);
+      const serialized = jsonPathTool.serialize(state);
       const encodedState = compressToEncodedURIComponent(serialized);
       if (!encodedState) throw new Error('Failed to encode state for URL');
       const url = new URL(window.location.href);
@@ -115,7 +100,7 @@ export default function ToolClient() {
   }, [showToast, state, title]);
 
   const handleClear = useCallback(() => {
-    setToolData(() => ({ ...DEFAULT_STATE, input: '' }));
+    setToolData(() => ({ ...DEFAULT_STATE }));
   }, [setToolData]);
 
   const toolbarContent = (
@@ -133,7 +118,7 @@ export default function ToolClient() {
   );
 
   const sidebarContent = (
-    <ToolSidebar text={state.input} fontSize={fontSize} onFontSizeChange={handleFontSizeChange} />
+    <ToolSidebar state={state} fontSize={fontSize} onFontSizeChange={handleFontSizeChange} />
   );
 
   const canvasContent = (
@@ -162,8 +147,7 @@ export default function ToolClient() {
           'Ready'
         )}
       </span>
-      <span className="status-slot status-slot-font-size">{fontSize}px</span>
-      <span className="status-slot">Input base: {state.inputBase}</span>
+      <span className="status-slot">Query: {state.query || '—'}</span>
       <span className="status-slot status-slot-tool-version">Tool v{toolConfig.version}</span>
       <span className="status-slot status-slot-template-version">
         Template v{templateBaseVersion}
@@ -199,9 +183,7 @@ export default function ToolClient() {
             const SidebarSection = ToolShellCompat.Sidebar as ComponentType<{
               children?: ReactNode;
             }>;
-            const CanvasSection = ToolShellCompat.Canvas as ComponentType<{
-              children?: ReactNode;
-            }>;
+            const CanvasSection = ToolShellCompat.Canvas as ComponentType<{ children?: ReactNode }>;
             const StatusBarSection = ToolShellCompat.StatusBar as ComponentType<{
               children?: ReactNode;
             }>;

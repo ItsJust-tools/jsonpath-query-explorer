@@ -38,7 +38,7 @@ vi.mock('@itsjust/core', () => ({
   ),
   useTool: () => ({
     state: {
-      data: { input: 'Hello', inputBase: 10, digitCase: 'lower', grouping: 'none', showTwosComplement: true, bitLength: 32 },
+      data: { jsonInput: '{"a":1}', query: '$.a' },
       setData: mockSetData,
       isDirty: false,
       lastSaved: 'just now',
@@ -54,22 +54,22 @@ vi.mock('@itsjust/core', () => ({
 
 vi.mock('@/tool', () => ({
   toolConfig: {
-    id: '1795194271',
-    name: 'Base Converter',
+    id: 'tool-1795269875',
+    name: 'JSONPath Query Explorer',
     version: '1.0.0',
     features: { sidebar: true },
-    theme: { brand: 'Base Converter' },
+    theme: { brand: 'JSONPath Explorer' },
   },
   templateBaseVersion: '1.1.0',
-  ToolCanvas: ({ state }: { state: { input: string } }) => <div>canvas:{state.input}</div>,
+  ToolCanvas: ({ state }: { state: { query: string } }) => <div>canvas:{state.query}</div>,
   ToolToolbar: () => <div>toolbar</div>,
-  ToolSidebar: ({ text }: { text: string }) => <div>sidebar:{text}</div>,
+  ToolSidebar: ({ state }: { state: { query: string } }) => <div>sidebar:{state.query}</div>,
 }));
 
 vi.mock('@/tool/tool-definition', () => ({
-  baseConverterTool: {
+  jsonPathTool: {
     serialize: (state: unknown) => JSON.stringify(state),
-    deserialize: () => ({ success: true, data: { input: 'From Shared Url', inputBase: 10 } }),
+    deserialize: () => ({ success: true, data: { jsonInput: 'From Shared Url', query: '$.a' } }),
   },
 }));
 

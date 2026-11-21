@@ -1,26 +1,57 @@
-import type { ToolConfig, ToolTheme } from '@itsjust/core';
+import type { ToolConfig } from '@itsjust/core';
+import packageJson from '../../package.json';
 
-const toolTheme: ToolTheme = {
-  brand: 'Base Converter',
-  accent: '#10b981',
-};
+export const templateBaseVersion = packageJson.version;
 
-export const toolConfig: ToolConfig = {
-  id: '1795194271',
-  name: 'Base Converter',
+const toolConfig: ToolConfig = {
+  id: 'tool-1795269875',
+  name: 'JSONPath Query Explorer',
   description:
-    'Convert numbers between binary, octal, decimal, hexadecimal and arbitrary bases 2-36 with live input and bit grouping.',
+    'Run JSONPath queries against arbitrary JSON and see results highlighted in the source tree with path suggestions, error reporting, sample datasets and shareable sessions.',
   version: '1.0.0',
   exportFormats: ['png', 'jpeg', 'webp', 'pdf'],
   features: {
     export: true,
     autoSave: true,
-    undoRedo: true,
+    undoRedo: false,
     sidebar: true,
     statusBar: true,
     darkMode: true,
   },
-  theme: toolTheme,
+  theme: {
+    accent: '#0ea5e9',
+    accentHover: '#0284c9',
+    accentSubtle: 'rgba(14, 165, 233, 0.08)',
+    brand: 'JSONPath Explorer',
+    icon: '🔎',
+  },
+  shortcuts: [
+    {
+      title: 'Query',
+      shortcuts: [
+        {
+          label: 'Run query',
+          keys: 'Mod+Enter',
+          description: 'Evaluate the current JSONPath against the JSON input',
+        },
+        {
+          label: 'Clear query',
+          keys: 'Mod+Shift+X',
+          description: 'Clear the query box',
+        },
+      ],
+    },
+    {
+      title: 'Data',
+      shortcuts: [
+        {
+          label: 'Load sample data',
+          keys: 'Mod+Shift+L',
+          description: 'Cycle through the built-in sample datasets',
+        },
+      ],
+    },
+  ],
 };
 
 export default toolConfig;

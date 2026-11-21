@@ -6,45 +6,45 @@ import type { ToolState } from '../types';
 interface ToolbarProps {
   state: ToolState;
   onChange: (state: ToolState) => void;
-  onClear: () => void;
+  onClear?: () => void;
 }
 
-const QUICK_BASES: { base: number; label: string }[] = [
-  { base: 2, label: 'BIN' },
-  { base: 8, label: 'OCT' },
-  { base: 10, label: 'DEC' },
-  { base: 16, label: 'HEX' },
-];
-
 export const Toolbar: React.FC<ToolbarProps> = ({ state, onChange, onClear }) => {
+  const update = (patch: Partial<ToolState>) => onChange({ ...state, ...patch });
+
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex items-center gap-1" role="group" aria-label="Quick input base">
-        {QUICK_BASES.map(({ base, label }) => (
-          <button
-            key={base}
-            type="button"
-            onClick={() => onChange({ ...state, inputBase: base })}
-            aria-pressed={state.inputBase === base}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-              state.inputBase === base
-                ? 'bg-emerald-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <div className="flex items-center gap-2">
+    <div
+      className="jp-toolbar flex flex-wrap items-center gap-2 p-2"
+      data-testid="jsonpath-toolbar"
+    >
+      <label
+        htmlFor="toolbar-query"
+        className="text-xs font-medium text-gray-600 dark:text-gray-300"
+      >
+        Query
+      </label>
+      <input
+        id="toolbar-query"
+        type="text"
+        value={state.query}
+        onChange={(e) => update({ query: e.target.value })}
+        placeholder="$.store.users[*].name"
+        spellCheck={false}
+        className="flex-1 min-w-48 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1 font-mono text-xs"
+        data-testid="toolbar-query-input"
+      />
+      {onClear ? (
         <button
           type="button"
           onClick={onClear}
-          className="rounded-md bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          className="rounded border border-gray-300 dark:border-gray-700 px-2 py-1 text-xs hover:bg-gray-100 dark:hover:bg-gray-800"
+          data-testid="toolbar-clear"
         >
-          Clear
+          Reset
         </button>
-      </div>
+      ) : null}
     </div>
   );
 };
+
+export default Toolbar;

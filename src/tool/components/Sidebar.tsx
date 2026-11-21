@@ -1,84 +1,86 @@
 'use client';
 
 import React from 'react';
-import { MAX_BASE, MIN_BASE, type BitGrouping, type DigitCase, type ToolState } from '../types';
+import type { ToolState } from '../types';
+import { JSONPATH_CHEATSHEET } from './Canvas';
 
 interface SidebarProps {
   state: ToolState;
-  onChange: (state: ToolState) => void;
+  fontSize?: number;
+  onFontSizeChange?: (delta: number) => void;
+  onChange?: (state: ToolState) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ state, onChange }) => {
-  const update = (patch: Partial<ToolState>) => onChange({ ...state, ...patch });
+const CHEAT_SHEET: Array<{ syntax: string; meaning: string }> = JSONPATH_CHEATSHEET;
+
+export const Sidebar: React.FC<SidebarProps> = ({ state, onFontSizeChange }) => {
+  const stats = React.useMemo(() => {
+    const text = state.jsonInput;
+    const bytes = new TextEncoder().encode(text).length;
+    return { chars: text.length, bytes };
+  }, [state.jsonInput]);
 
   return (
-    <div className="p-4 space-y-6 text-sm overflow-y-auto h-full" data-testid="base-converter-sidebar">
-      <div>
-        <h3 className="mb-2 font-medium text-gray-900 dark:text-gray-100">Digit case</h3>
-        <div className="flex gap-2">
-          {(['lower', 'upper'] as DigitCase[]).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => update({ digitCase: mode })}
-              aria-pressed={state.digitCase === mode}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium ${
-                state.digitCase === mode
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              {mode === 'lower' ? 'lowercase (a-f)' : 'UPPERCASE (A-F)'}
-            </button>
+    <div className="jp-sidebar p-3 space-y-4 text-sm" data-testid="jsonpath-sidebar">
+      <div className="sidebar-section">
+        <h3 className="text-xs font-medium uppercase tracking-wider text-gray-500">Input stats</h3>
+        <dl className="stats-list mt-1 space-y-1 text-xs">
+          <div className="stat-row flex justify-between">
+            <dt>Characters</dt>
+            <dd>{stats.chars.toLocaleString()}</dd>
+          </div>
+          <div className="stat-row flex justify-between">
+            <dt>Bytes (UTF-8)</dt>
+            <dd>{stats.bytes.toLocaleString()}</dd>
+          </div>
+          <div className="stat-row flex justify-between">
+            <dt>Query</dt>
+            <dd className="max-w-[10rem] truncate font-mono" title={state.query}>
+              {state.query || '—'}
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <div className="sidebar-section">
+        <h3 className="text-xs font-medium uppercase tracking-wider text-gray-500">
+          JSONPath cheat sheet
+        </h3>
+        <ul className="mt-1 space-y-1 text-xs">
+          {CHEAT_SHEET.map((entry) => (
+            <li key={entry.syntax}>
+              <code className="font-mono text-sky-700 dark:text-sky-300">{entry.syntax}</code>
+              <span className="ml-1 text-gray-500">— {entry.meaning}</span>
+            </li>
           ))}
+        </ul>
+      </div>
+
+      {onFontSizeChange ? (
+        <div className="sidebar-section">
+          <h3 className="text-xs font-medium uppercase tracking-wider text-gray-500">Font size</h3>
+          <div className="mt-1 flex gap-2">
+            <button
+              type="button"
+              aria-label="Decrease font size"
+              onClick={() => onFontSizeChange(-2)}
+              className="rounded border border-gray-300 px-2 text-xs dark:border-gray-700"
+            >
+              A-
+            </button>
+            <button
+              type="button"
+              aria-label="Increase font size"
+              onClick={() => onFontSizeChange(2)}
+              className="rounded border border-gray-300 px-2 text-xs dark:border-gray-700"
+            >
+              A+
+            </button>
+          </div>
         </div>
-      </div>
-
-      <div>
-        <h3 className="mb-2 font-medium text-gray-900 dark:text-gray-100">Binary grouping</h3>
-        <select
-          aria-label="Binary grouping"
-          value={state.grouping}
-          onChange={(e) => update({ grouping: e.target.value as BitGrouping })}
-          className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-        >
-          <option value="none">No grouping</option>
-          <option value="nibble">Nibbles (4 bits)</option>
-          <option value="byte">Bytes (8 bits)</option>
-        </select>
-      </div>
-
-      <div>
-        <h3 className="mb-2 font-medium text-gray-900 dark:text-gray-100">Two's complement</h3>
-        <label className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Show signed representation</span>
-          <input
-            type="checkbox"
-            checked={state.showTwosComplement}
-            onChange={(e) => update({ showTwosComplement: e.target.checked })}
-            className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-          />
-        </label>
-        <label className="mt-2 block text-xs font-medium text-gray-700 dark:text-gray-300">
-          Bit length
-          <input
-            type="number"
-            min={1}
-            max={512}
-            step={1}
-            value={state.bitLength}
-            onChange={(e) => {
-              const n = Math.trunc(Number(e.target.value));
-              update({ bitLength: Number.isFinite(n) && n >= 1 ? Math.min(n, 512) : 1 });
-            }}
-            className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-          />
-        </label>
-      </div>
-
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        Bases {MIN_BASE}–{MAX_BASE} are supported. Digits above 9 use letters a–z.
-      </p>
+      ) : null}
     </div>
   );
 };
+
+export default Sidebar;
