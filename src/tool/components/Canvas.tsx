@@ -142,15 +142,17 @@ export const Canvas: React.FC<CanvasProps> = ({ state, onChange }) => {
   const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set(['$']));
   const [queryDraft, setQueryDraft] = React.useState(state.query);
   const [jsonDraft, setJsonDraft] = React.useState(state.jsonInput);
-  const [committed, setCommitted] = React.useState<ToolState | null>(state);
+  const prevState = React.useRef(state);
 
   React.useEffect(() => {
-    if (state !== committed) {
-      setQueryDraft(state.query);
-      setJsonDraft(state.jsonInput);
-      setCommitted(state);
-    }
-  }, [state, committed]);
+    const prev = prevState.current;
+    if (state === prev) return;
+    prevState.current = state;
+    // Reset the local drafts only for the fields that actually changed so the
+    // user's in-progress draft edits are not clobbered on unrelated updates.
+    if (state.query !== prev.query) setQueryDraft(state.query);
+    if (state.jsonInput !== prev.jsonInput) setJsonDraft(state.jsonInput);
+  }, [state]);
 
   const parsed = React.useMemo(() => parseJsonInput(jsonDraft), [jsonDraft]);
   const queryParsed = React.useMemo(() => parseJsonPath(queryDraft), [queryDraft]);

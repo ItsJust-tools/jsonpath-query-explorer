@@ -1,6 +1,14 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from 'react';
 import { ToolShell, useTool, ImportExport } from '@itsjust/core';
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 import { toolConfig, templateBaseVersion, ToolCanvas, ToolToolbar, ToolSidebar } from '@/tool';
@@ -33,7 +41,7 @@ export default function ToolClient() {
   const title = toolConfig.name;
   const state = tool.state.data;
 
-  useMemo(() => {
+  useEffect(() => {
     if (typeof document !== 'undefined') document.title = title;
   }, [title]);
 
@@ -48,7 +56,7 @@ export default function ToolClient() {
     setFontSize((prev) => Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, prev + delta)));
   }, []);
 
-  useMemo(() => {
+  useEffect(() => {
     if (hasLoadedSharedState.current) return;
     hasLoadedSharedState.current = true;
     const params = new URLSearchParams(window.location.search);
